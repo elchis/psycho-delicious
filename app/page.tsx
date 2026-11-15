@@ -2,7 +2,7 @@ import React from 'react';
 
 // さくらのWordPressからGraphQLでデータを取得する関数
 async function getWordPressPosts() {
-  const endpoint = process.env.WORDPRESS_API_URL;
+  const endpoint = process.env.WORDPRESS_API_URL?.trim();
   
   if (!endpoint) {
     throw new Error('WORDPRESS_API_URL が設定されていません。.env.local を確認してください。');
@@ -27,12 +27,20 @@ async function getWordPressPosts() {
         }
       `,
     }),
-    // 開発中にデータを即時反映させるための設定
     cache: 'force-cache',
   });
 
-  const { data } = await res.json();
-  return data?.posts?.nodes || [];
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`WordPress API Error (${res.status}): ${errorText.slice(0, 200)}`);
+  }
+
+  const json = await res.json();
+  if (json.errors) {
+    throw new Error(`GraphQL Error: ${JSON.stringify(json.errors)}`);
+  }
+
+  return json.data?.posts?.nodes || [];
 }
 
 // 画面を表示するメインのコンポーネント
@@ -48,7 +56,7 @@ export default async function Page() {
         {posts.map((post: any) => (
           <li key={post.id} style={{ marginBottom: '1.5rem', borderBottom: '1px solid #eee', paddingBottom: '1rem' }}>
             <span style={{ fontSize: '0.85rem', color: '#888' }}>
-              {new Date(post.date).toLocaleDateString()}
+              {new Date(post.date).toLocaleDateString('ja-JP')}
             </span>
             <h2 style={{ fontSize: '1.25rem', marginTop: '0.25rem' }}>
               {post.title}
