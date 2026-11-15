@@ -28,7 +28,8 @@ async function getWordPressPosts() {
       `,
     }),
     // 開発中にデータを即時反映させるための設定
-    cache: 'no-store',
+#    cache: 'no-store',
+    cache: 'force-cache',
   });
 
   const { data } = await res.json();
